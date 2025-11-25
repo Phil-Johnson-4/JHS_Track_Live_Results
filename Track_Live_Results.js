@@ -7,6 +7,7 @@ const service = await server.getPrimaryService('3ab10100-f831-4395-b29d-570977d5
 const characteristic = await service.getCharacteristic('3ab10100-f831-4395-b29d-570977d5bf94');
 
 await characteristic.startNotifications();
+//TOOK THIS AWAY TO TEST IF IT RESOLVED THE ISSUES.
 
 /* THIS WAS OLDER CODE BEFORE I KNEW HOW TO INTERCEPT THE DATA COMING FROM THE DISTO E7500i
 characteristic.addEventListener('characteristicvaluechanged', event => {
@@ -57,6 +58,7 @@ async function connectDISTO() {
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('connectBtn').addEventListener('click', connectDISTO);
 });
+
 
 
 
