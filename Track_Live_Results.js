@@ -1,72 +1,96 @@
+// Leica DISTO E7500i BLE Integration
 
+// UUIDs for Leica DISTO
+const SERVICE_UUID = '3ab10100-f831-4395-b29d-570977d5bf94';
+const CHARACTERISTIC_UUID = '3ab10101-f831-4395-b29d-570977d5bf94';
 
-//const service = await server.getPrimaryService('0000fff0-0000-1000-8000-00805f9b34fb');
-//const characteristic = await service.getCharacteristic('0000fff1-0000-1000-8000-00805f9b34fb');
-// NEW CODE WITH THE UPDATED UUID ADDRESS? ORIGINAL CODE COMMENTED OUT UP ABOVE.
-//const service = await server.getPrimaryService('3ab10100-f831-4395-b29d-570977d5bf94');
-//const characteristic = await service.getCharacteristic('3ab10100-f831-4395-b29d-570977d5bf94');
+const connectBtn = document.getElementById('connectBtn');
+const measurementDisplay = document.getElementById('measurement');
+const statusText = document.getElementById('statusText');
 
-//await characteristic.startNotifications();
-//TOOK THIS AWAY TO TEST IF IT RESOLVED THE ISSUES.
-
-/* THIS WAS OLDER CODE BEFORE I KNEW HOW TO INTERCEPT THE DATA COMING FROM THE DISTO E7500i
-characteristic.addEventListener('characteristicvaluechanged', event => {
-    const decoder = new TextDecoder('utf-8');
-    const value = decoder.decode(event.target.value.buffer);
-    document.getElementById('measurement').innerText = value;
-});*/
-
-characteristic.addEventListener('characteristicvaluechanged', event => {
-    const dataView = event.target.value;
-    const value = dataView.getFloat32(0, true); // true = little-endian
-    document.getElementById('measurement').innerText = value.toFixed(2) + ' m';
-});
-
+let device;
+let server;
+let service;
+let characteristic;
 
 async function connectDISTO() {
     try {
-        const device = await navigator.bluetooth.requestDevice({
+        updateStatus('Connecting...', false);
+
+        // Request Bluetooth Device
+        device = await navigator.bluetooth.requestDevice({
             filters: [{ namePrefix: 'DISTO' }],
-            //optionalServices: ['0000fff0-0000-1000-8000-00805f9b34fb'] // measurement service
-//NEW CODES GIVEN HERE. ORIGINAL COMMENTED OUT ABOVE
-            optionalServices: ['3ab10100-f831-4395-b29d-570977d5bf94'] // measurement service
+            optionalServices: [SERVICE_UUID]
         });
 
-        const server = await device.gatt.connect();
+        device.addEventListener('gattserverdisconnected', onDisconnected);
 
-        //const service = await server.getPrimaryService('0000fff0-0000-1000-8000-00805f9b34fb');
-        //const characteristic = await service.getCharacteristic('0000fff1-0000-1000-8000-00805f9b34fb');
- //TESTING OUT SOME DIFFERENT CODES HERE? ORIGINALS ARE UP ABOVE
-        const service = await server.getPrimaryService('3ab10100-f831-4395-b29d-570977d5bf94');
-        const characteristic = await service.getCharacteristic('3ab10100-f831-4395-b29d-570977d5bf94');
-        
+        // Connect to GATT Server
+        server = await device.gatt.connect();
+
+        // Get Service
+        service = await server.getPrimaryService(SERVICE_UUID);
+
+        // Get Characteristic
+        characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+        // Start Notifications
         await characteristic.startNotifications();
-        characteristic.addEventListener('characteristicvaluechanged', event => {
-            const dataView = event.target.value;
-            const value = dataView.getFloat32(0, true); // little-endian Float32
-            document.getElementById('measurement').innerText = value.toFixed(2) + ' m';
-        });
-        document.getElementById('measurement').innerText = "Connected. Waiting for data...";
+        characteristic.addEventListener('characteristicvaluechanged', handleMeasurementUpdate);
+
+        updateStatus('Connected', true);
+        connectBtn.style.display = 'none'; // Hide button after connection
+
     } catch (error) {
-        console.error(error);
-        //document.getElementById('measurement').innerText = "Connection failed.";
-//THE LINE ABOVE THIS MAY HAVE BEEN THE PROBLEM????
+        console.error('Connection Error:', error);
+        updateStatus('Connection Failed', false);
+        alert('Failed to connect: ' + error.message);
     }
 }
 
-// Attach event listener to button
+function handleMeasurementUpdate(event) {
+    const dataView = event.target.value;
+
+    // Leica DISTO sends data as 32-bit Float (Little Endian)
+    // The characteristic we found (3ab10101...) is typically the distance.
+    // Let's verify the data length to be safe.
+    if (dataView.byteLength >= 4) {
+        const value = dataView.getFloat32(0, true); // true = little-endian
+        updateMeasurement(value);
+    } else {
+        console.warn('Received data with unexpected length:', dataView.byteLength);
+    }
+}
+
+function updateMeasurement(value) {
+    // Format to 3 decimal places for precision
+    measurementDisplay.innerText = value.toFixed(3);
+
+    // Add a small animation effect
+    measurementDisplay.style.transform = 'scale(1.1)';
+    setTimeout(() => {
+        measurementDisplay.style.transform = 'scale(1)';
+    }, 100);
+}
+
+function onDisconnected(event) {
+    const device = event.target;
+    console.log(`Device ${device.name} is disconnected.`);
+    updateStatus('Disconnected', false);
+    connectBtn.style.display = 'inline-flex';
+    measurementDisplay.innerText = '--';
+}
+
+function updateStatus(text, isConnected) {
+    statusText.innerText = text;
+    if (isConnected) {
+        statusText.classList.add('connected');
+    } else {
+        statusText.classList.remove('connected');
+    }
+}
+
+// Attach event listener
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('connectBtn').addEventListener('click', connectDISTO);
+    connectBtn.addEventListener('click', connectDISTO);
 });
-
-
-
-
-
-
-
-
-
-
-
-
