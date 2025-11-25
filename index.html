@@ -3,30 +3,37 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leica DISTO Connect</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-</head>
+    <!DOCTYPE html>
+    <html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Leica DISTO Connect</title>
+        <link rel="stylesheet" href="style.css">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    </head>
 
 <body>
     <div class="container">
-        <header>
-            <h1>Leica DISTO Connect</h1>
-            <p class="status" id="statusText">Disconnected</p>
-        </header>
-
         <main>
-            <div class="measurement-card">
-                <div class="label">Current Measurement</div>
-                <div class="value" id="measurement">--</div>
-                <div class="unit">meters</div>
+            <div class="measurement-display">
+                <div class="value metric" id="measurement">-- m</div>
+                <div class="value imperial" id="measurementImperial">--' --"</div>
             </div>
-
-            <button id="connectBtn" class="btn-primary">
-                <span class="icon">🔗</span> Connect Device
-            </button>
         </main>
+
+        <footer>
+            <div class="footer-left">
+                <h1>Leica DISTO Connect</h1>
+                <p class="status" id="statusText">Disconnected</p>
+            </div>
+            <div class="footer-right">
+                <button id="connectBtn" class="btn-primary">
+                    <span class="icon">🔗</span> Connect Device
+                </button>
+            </div>
+        </footer>
     </div>
 
     <script src="Track_Live_Results.js"></script>
